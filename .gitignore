@@ -1,0 +1,4 @@
+mini-http
+*.log
+/tmp/
+public/

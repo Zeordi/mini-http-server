@@ -1,12 +1,7 @@
----
-
-### 2. `task.toml`
-
-```toml
 version = "1.0"
 
 [metadata]
-author = "Abel Alemayehu"
+author = "Harbor Task Designer"
 name = "mini-http-server"
 category = "implementation"
 difficulty = "hard"

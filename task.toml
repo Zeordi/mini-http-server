@@ -1,0 +1,23 @@
+---
+
+### 2. `task.toml`
+
+```toml
+version = "1.0"
+
+[metadata]
+author = "Abel Alemayehu"
+name = "mini-http-server"
+category = "implementation"
+difficulty = "hard"
+estimated_hours = 10
+
+[agent]
+timeout_minutes = 1200
+max_steps = 400
+
+[verifier]
+timeout_minutes = 20
+
+[environment]
+build = "make"

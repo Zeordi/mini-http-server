@@ -52,7 +52,7 @@ harbor run -p . -a nop
 ## RustLabs form values
 
 - Kind of task: implementation (from-scratch network server)
-- What the agent has to do: write a correct HTTP/1.1 server from raw sockets; verifier scores routes, static files, POST body (Content-Length + chunked), 404/405/400, keep-alive, `Connection: close`, chunked responses, and concurrency, writing a score in [0,1] to /logs/verifier/reward.txt
+- What the agent has to do: write a correct HTTP/1.1 server from raw sockets; verifier scores routes, static files, POST body (Content-Length + chunked), 404/405/400 (including strict request-line validation), keep-alive, `Connection: close`, chunked responses, and concurrency, writing a score in [0,1] to /logs/verifier/reward.txt
 - Estimated time: 6–12 hours for a strong engineer
 - Oracle score: 1.0
 - Empty-agent score: 0.0

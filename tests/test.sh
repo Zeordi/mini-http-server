@@ -103,13 +103,13 @@ assert_code() {
 
 # ---------------- Tests ----------------
 
-# 1. GET /hello  (20)
+# 1. GET /hello  (14)
 http_get /hello
-assert_contains "/hello" 16 "$HTTP_CODE" "$HTTP_BODY" "Hello, World!"
+assert_contains "/hello" 14 "$HTTP_CODE" "$HTTP_BODY" "Hello, World!"
 
-# 2. GET / -> index.html  (15)
+# 2. GET / -> index.html  (11)
 http_get /
-assert_contains "GET / index.html" 13 "$HTTP_CODE" "$HTTP_BODY" "Welcome"
+assert_contains "GET / index.html" 11 "$HTTP_CODE" "$HTTP_BODY" "Welcome"
 
 # 3. GET /test.txt static  (10)
 http_get /test.txt
@@ -167,14 +167,15 @@ assert_code "POST /hello -> 405" 4 "$HTTP_CODE" 405
 http_get /submit
 assert_code "GET /submit -> 405" 4 "$HTTP_CODE" 405
 
-# 10. GET /hello with X-Chunked: 1 -> chunked response  (4)
-HTTP_BODY=$(curl -s -o /tmp/resp.body -w "%{http_code}" --max-time 5 --connect-timeout 2 \
-    -H "X-Chunked: 1" "http://127.0.0.1:$PORT/hello" 2>/dev/null) || HTTP_BODY="000"
-CHUNK_CODE="${HTTP_BODY: -3}"
+# 10. GET /hello with X-Chunked: 1 -> chunked response with Transfer-Encoding header  (6)
+HTTP_RC=$(curl -s -D /tmp/resp.headers -o /tmp/resp.body -w "%{http_code}" --max-time 5 --connect-timeout 2 \
+    -H "X-Chunked: 1" "http://127.0.0.1:$PORT/hello" 2>/dev/null) || HTTP_RC="000"
+CHUNK_CODE="${HTTP_RC: -3}"
 CHUNK_BODY=$(cat /tmp/resp.body 2>/dev/null)
-if [ "$CHUNK_CODE" = "200" ] && printf '%s' "$CHUNK_BODY" | grep -qF "Hello, World!"; then
-    SCORE=$((SCORE + 4))
-    echo "PASS: chunked response (X-Chunked)"
+CHUNK_HEADERS=$(cat /tmp/resp.headers 2>/dev/null)
+if [ "$CHUNK_CODE" = "200" ] && printf '%s' "$CHUNK_HEADERS" | grep -qi 'Transfer-Encoding: chunked' && printf '%s' "$CHUNK_BODY" | grep -qF "Hello, World!"; then
+    SCORE=$((SCORE + 6))
+    echo "PASS: chunked response (X-Chunked: Transfer-Encoding: chunked)"
 else
     echo "FAIL: chunked response (code=$CHUNK_CODE)"
 fi
@@ -247,7 +248,7 @@ else
     echo "FAIL: Connection: close (code=$code closed=$closed)"
 fi
 
-# 13. Malformed request -> 400  (5)
+# 13. Malformed request -> 400  (6)
 {
     exec 6<>/dev/tcp/127.0.0.1/"$PORT"
     printf 'NOTANHTTPREQUEST\r\n\r\n' >&6
@@ -258,17 +259,27 @@ fi
     fi
     exec 6<&- 6>&- || true
 } 2>/dev/null
-if [ "$mcode" = "400" ]; then
+{
+    exec 6<>/dev/tcp/127.0.0.1/"$PORT"
+    printf 'GET /\r\n\r\n' >&6
+    mcode2=""
+    if read -r -t 5 mline <&6; then
+        set -- $mline
+        mcode2="$2"
+    fi
+    exec 6<&- 6>&- || true
+} 2>/dev/null
+if [ "$mcode" = "400" ] && [ "$mcode2" = "400" ]; then
     SCORE=$((SCORE + 6))
     echo "PASS: malformed request -> 400"
 else
-    echo "FAIL: malformed request (code=${mcode:-none})"
+    echo "FAIL: malformed request (code=${mcode:-none}, code2=${mcode2:-none})"
 fi
 
-# 14. Concurrency: 30 parallel GET /hello, at least 25 must succeed  (6)
+# 14. Concurrency: 50 parallel GET /hello, at least 45 must succeed  (10)
 success=0
 pids=""
-for i in $(seq 1 30); do
+for i in $(seq 1 50); do
     (
         http_get /hello
         if [ "$HTTP_CODE" = "200" ]; then
@@ -282,17 +293,17 @@ done
 for p in $pids; do
     wait "$p" 2>/dev/null || true
 done
-for i in $(seq 1 30); do
+for i in $(seq 1 50); do
     if [ -f /tmp/conc.$i ] && [ "$(cat /tmp/conc.$i)" = "1" ]; then
         success=$((success + 1))
     fi
     rm -f /tmp/conc.$i
 done
-if [ "$success" -ge 25 ]; then
-    SCORE=$((SCORE + 8))
-    echo "PASS: concurrency ($success/30)"
+if [ "$success" -ge 45 ]; then
+    SCORE=$((SCORE + 10))
+    echo "PASS: concurrency ($success/50)"
 else
-    echo "FAIL: concurrency ($success/30)"
+    echo "FAIL: concurrency ($success/50)"
 fi
 
 # ---------------- Final ----------------

@@ -12,7 +12,7 @@ Implement a correct HTTP/1.1 server **from scratch** using only raw TCP sockets.
 
 Your server must implement all of the following:
 
-1. **HTTP/1.1 parsing** — parse the request line (`METHOD PATH HTTP/1.1`), headers (case-insensitive, `\r\n` terminated), and the message body.
+1. **HTTP/1.1 parsing** — parse the request line as exactly three whitespace-separated fields: `METHOD PATH HTTP/VERSION` (e.g. `GET /hello HTTP/1.1`). A request line with any number of fields other than three must be rejected with `400 Bad Request`. Headers are case-insensitive, `\r\n` terminated, and followed by a blank line separating them from the message body.
 2. **Persistent connections (keep-alive)** — by default (`Connection: keep-alive`, the HTTP/1.1 default) the server must serve multiple requests on the same TCP connection and only close when the client sends `Connection: close` or disconnects.
 3. **`Connection: close`** — honor it and close the connection cleanly after the current response.
 4. **Content-Length** — all responses must include a correct `Content-Length` header (or valid chunked transfer encoding, see below).

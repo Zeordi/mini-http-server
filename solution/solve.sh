@@ -101,7 +101,7 @@ func readRequest(br *bufio.Reader) (*request, error) {
 		return nil, io.EOF
 	}
 	fields := strings.Fields(line)
-	if len(fields) < 2 {
+	if len(fields) != 3 {
 		return nil, errBadRequest
 	}
 	method := strings.ToUpper(fields[0])

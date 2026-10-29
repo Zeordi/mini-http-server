@@ -19,5 +19,5 @@ WORKDIR /workspace
 
 COPY workspace/ /workspace/
 
-# Static files used by the verifier are also committed under workspace/public/.
-RUN mkdir -p /workspace/public
+# Static fixtures are committed under workspace/public/ and copied above.
+# (public/index.html and public/test.txt are served by the mini-http server.)
